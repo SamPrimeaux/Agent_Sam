@@ -1,0 +1,40 @@
+# Agent Sam → [Agent_Sam](https://github.com/SamPrimeaux/Agent_Sam) repo roadmap
+
+This dashboard (the `/dashboard` app in this codebase) is intended to become a **standalone, resale-ready asset** in its own repo: **https://github.com/SamPrimeaux/Agent_Sam**.
+
+---
+
+## What to put in Agent_Sam (standalone copy)
+
+When you spin the dashboard into its own repo, copy at least:
+
+- **Runtime:** `worker.js`, `wrangler.toml`, `dashboard-shell.html`, `build.js`
+- **Content:** `overview-content.html` (root), `static/dashboard/*-content.html`, `static/dashboard/*.js`, `static/auth-signin.html`, `static/index.html`, `static/dashboard-dock.*`
+- **Scripts:** `scripts/upload-to-r2.sh`, `scripts/upload-to-r2.sh` (and any other deploy helpers)
+- **Schema:** `migrations/` (all SQL used by this Worker + D1)
+- **Docs:** `docs/BUILD_SUMMARY.md`, `docs/FINANCE_GAUGES_AND_REAL_METRICS.md`, this file
+- **Config:** `.env.example` (no secrets), any env docs
+
+Then in the new repo:
+
+- `npm init` / `package.json` if you need `node build.js` and `wrangler` as scripts
+- README: what the app is, how to deploy (Wrangler, R2, D1), env vars, and link to BUILD_SUMMARY
+
+---
+
+## Path to 100% reliable → GitHub App → OAuth → resale
+
+| Stage | Focus |
+|-------|--------|
+| **1. Reliable** | All critical pages and APIs working; CSV import, finance gauges, MRR colors, themes; deploy pipeline (build → R2 → deploy) documented and repeatable; no hardcoded tenant/account where it should be configurable. |
+| **2. GitHub App** | [GitHub App](https://docs.github.com/en/apps) for the dashboard: install per-org/per-repo, use App credentials for API access (e.g. repos, issues, deploy status). Implement in worker: OAuth-style install flow, store installation tokens, optional webhooks. |
+| **3. GitHub OAuth** | User sign-in via GitHub OAuth (in addition to or instead of current auth): `GET /api/auth/github`, callback, store user identity; optional “Login with GitHub” on auth-signin. |
+| **4. Resale-ready** | Multi-tenant by config (env or D1); no Inner Animal–specific branding in code (or behind feature flag); clear pricing/limits (e.g. seats, storage); docs for “deploy your own” and “use as SaaS”; license (e.g. MIT in Agent_Sam) and terms. |
+
+---
+
+## Repo link
+
+- **Target repo:** [SamPrimeaux/Agent_Sam](https://github.com/SamPrimeaux/Agent_Sam) (MIT)
+
+Once the dashboard is stable here, you can clone Agent_Sam, copy the files above into it, add README + package.json, and push. After that, work on GitHub App and OAuth in that repo so the asset stays clean and resale-ready.
