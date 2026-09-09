@@ -1,6 +1,6 @@
 {
   "name": "@inneranimalmedia/agentsam-sdk",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Portable AgentSam SDK and CLI kits for local scaffolding, repository intelligence, incremental indexing, identity adapters, and verified dependency maintenance.",
   "type": "module",
   "main": "./src/index.js",
