@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.inneranimalmedia.com/agentsam/recon/task-packet.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "title": "ReconTaskPacket",
+  "description": "A bounded assignment handed to a cheap/local recon worker. Produced by a deterministic controller (rg/AST/repository.intelligence), never by the worker itself.",
+  "required": [
+    "schema_version",
+    "task_id",
+    "repo_root",
+    "base_sha",
+    "question",
+    "slices",
+    "ceilings"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "task_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Caller-supplied identifier. Never a workspace/tenant ID — this is a task handle only."
+    },
+    "repo_root": { "type": "string", "minLength": 1 },
+    "base_sha": { "type": "string", "minLength": 1 },
+    "question": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Exactly one bounded question. Not 'audit the subsystem'."
+    },
+    "slices": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "description": "Exact file/line slices the worker may read. The worker must not open anything outside this list.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "start_line": { "type": "integer", "minimum": 1 },
+          "end_line": { "type": "integer", "minimum": 1 },
+          "content": { "type": "string" },
+          "reason": { "type": "string" },
+          "kind": {
+            "type": "string",
+            "description": "Optional structural label from a disambiguating tool (e.g. ast-grep): member, object_key, sql_string, call, comment, unknown. Absent when the slice came from lexical search alone."
+          },
+          "hit_count": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Optional: how many raw search hits this slice's line range covers, when built via from_matches()."
+          }
+        }
+      }
+    },
+    "allowed_diagnostics": {
+      "type": "array",
+      "description": "Pre-approved read-only commands the worker may run verbatim. Empty/omitted means none.",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "ceilings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_follow_up_reads", "max_output_tokens", "timeout_seconds"],
+      "properties": {
+        "max_follow_up_reads": { "type": "integer", "minimum": 0, "maximum": 2 },
+        "max_output_tokens": { "type": "integer", "minimum": 1 },
+        "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 600 }
+      }
+    },
+    "response_schema_ref": {
+      "type": "string",
+      "const": "./finding-report.schema.json"
+    }
+  }
+}
