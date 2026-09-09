@@ -67,6 +67,7 @@ Python-backed snapshots capture repository composition and Git churn.
 | File integrity | `agentsam merkle`; `/merkle` | [Merkle](docs/MERKLE.md) |
 | Dependency health and repair | `agentsam security`; `/security` | [Security](docs/SECURITY.md) |
 | Mini prototypes | `agentsam mini`; `/mini` | [Mini](docs/MINI.md) |
+| Recon bounded-worker packets | `agentsam recon pack\|validate` | [Recon](docs/RECON.md) |
 | Local containers | `agentsam dockerize`; `/dockerize` | [Dockerize](docs/DOCKERIZE.md) |
 | Background indexing service | Docker `knowledge_service`; `/knowledge-service-client` | [Knowledge service](docs/knowledge-service.md) |
 | Local status, DB, terminal UI | `agentsam status`, `db`, `tui`, `start-local` | [Terminal UI](docs/CLI_SHELL.md) |

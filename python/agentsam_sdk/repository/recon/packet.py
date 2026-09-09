@@ -12,6 +12,7 @@ Stdlib only.
 """
 from __future__ import annotations
 
+import json
 import subprocess
 import time
 import uuid
@@ -148,8 +149,8 @@ def from_matches(
 
     This is the adapter for "I already ran rg/ast-grep and have a hit list, now I
     need packets" -- it does not run any search itself. `matches` is any iterable of
-    {"path": str, "line": int, "kind": str?} -- rg --json output mapped to this shape
-    works today; ast-grep output mapped the same way works once that lands.
+    {"path": str, "line": int, "kind": str?} -- output from from_ripgrep()/from_ast_grep()
+    (or any hand-built equivalent) works directly.
 
     Hits are grouped by file into one slice per file (a [min-context, max+context]
     line window covering every hit in that file), then chunked into packets of at
@@ -215,3 +216,79 @@ def from_matches(
             )
         )
     return packets
+
+
+def from_ripgrep(rg_json: str | Iterable[str]) -> list[dict[str, Any]]:
+    """Parse `rg --json` NDJSON output into `from_matches()`-shaped hits.
+
+    Runs no search itself -- pass the captured stdout of an `rg --json ...` call
+    (a single string, or an iterable of its lines). Only `type: "match"` records are
+    kept. rg is lexical only, so hits carry no `kind` -- pair with `from_ast_grep()`
+    output in the same `matches` list when structural classification is available.
+
+    Example::
+
+        raw = subprocess.run(
+            ["rg", "--json", "-e", "workspace_id", "backend/workflows"],
+            capture_output=True, text=True,
+        ).stdout
+        matches = recon.from_ripgrep(raw)
+    """
+    lines = rg_json.splitlines() if isinstance(rg_json, str) else rg_json
+    hits: list[dict[str, Any]] = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise PacketError(f"rg_json_line_invalid:{line[:80]}") from exc
+        if obj.get("type") != "match":
+            continue
+        data = obj.get("data", {})
+        path = (data.get("path") or {}).get("text")
+        line_number = data.get("line_number")
+        if not path or line_number is None:
+            continue
+        hits.append({"path": path, "line": int(line_number)})
+    return hits
+
+
+def from_ast_grep(sg_json_compact: str, *, kind: str | None = None) -> list[dict[str, Any]]:
+    """Parse `sg`/`ast-grep ... --json=compact` array output into `from_matches()`-shaped hits.
+
+    Runs no search itself. One ast-grep invocation is one pattern or one inline rule --
+    i.e. one structural shape -- so `kind` is a caller-supplied label applied to every
+    hit from that call (e.g. "member", "member_camel", "sql_string"), not something
+    this function infers. Redirect the deprecation banner ast-grep prints on stderr
+    away from stdout (it does not appear in --json=compact stdout, but callers piping
+    `2>&1` will see it mixed in).
+
+    Example::
+
+        raw = subprocess.run(
+            ["sg", "-p", "$X.workspace_id", "-l", "js", "--json=compact",
+             "backend/workflows"],
+            capture_output=True, text=True,
+        ).stdout
+        matches = recon.from_ast_grep(raw, kind="member")
+    """
+    text = sg_json_compact.strip()
+    if not text:
+        return []
+    try:
+        records = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise PacketError(f"sg_json_invalid:{text[:80]}") from exc
+    hits: list[dict[str, Any]] = []
+    for record in records:
+        path = record.get("file")
+        line_number = ((record.get("range") or {}).get("start") or {}).get("line")
+        if not path or line_number is None:
+            continue
+        hit: dict[str, Any] = {"path": path, "line": int(line_number)}
+        if kind:
+            hit["kind"] = kind
+        hits.append(hit)
+    return hits
