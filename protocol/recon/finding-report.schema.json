@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.inneranimalmedia.com/agentsam/recon/finding-report.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "title": "ReconFindingReport",
+  "description": "The only artifact a bounded recon worker may produce. It never edits files, never touches Git, and never owns a branch.",
+  "required": ["schema_version", "task_id", "status"],
+  "oneOf": [
+    { "required": ["status"], "properties": { "status": { "const": "needs_context" } } },
+    { "required": ["status"], "properties": { "status": { "const": "answered" } } }
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["answered", "needs_context"] },
+    "summary": { "type": "string" },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["severity", "file", "finding"],
+        "properties": {
+          "severity": { "enum": ["low", "medium", "high"] },
+          "file": { "type": "string" },
+          "lines": { "type": "string" },
+          "finding": { "type": "string" },
+          "evidence": { "type": "string" },
+          "recommended_action": { "type": "string" }
+        }
+      }
+    },
+    "affected_files": { "type": "array", "items": { "type": "string" } },
+    "unknowns": { "type": "array", "items": { "type": "string" } },
+    "missing": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Required when status is needs_context: what evidence was missing."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Required when status is needs_context: why the supplied slices were insufficient."
+    }
+  }
+}
