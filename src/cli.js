@@ -23,6 +23,7 @@ import { runMini } from './commands/mini.js';
 import { runMerkle } from './commands/merkle.js';
 import { runDeployReceipt } from './commands/deploy-receipt.js';
 import { runSecurity } from './commands/security.js';
+import { runRecon } from './commands/recon.js';
 import { SLASH_COMMANDS, SHELL_PHASES } from './lib/slash-commands.js';
 import fs from 'node:fs';
 import { repositoryRoot } from './knowledge/config.js';
@@ -50,6 +51,7 @@ function printHelp() {
     agentsam mini <name>       Create and preview a small local gadget (--help for options)
     agentsam merkle            File integrity, snapshots, comparisons, and TUI (--help)
     agentsam deploy-receipt    Merkle deploy/checkpoint capture + promote/failure receipts (--help)
+    agentsam recon             Bounded-worker task packets + finding-report validation (--help)
     agentsam security          Dependency scan, log triage, and verified repair (--help)
     agentsam status [--json]   Live local Git + DB + API + PTY status
     agentsam db init|status    Manage the project-local SQLite database
@@ -123,13 +125,13 @@ async function runLocalInit(config) {
   );
 
   console.log(`
-  ┌─────────────────────────────────────┐
+  ┌──────────────────────────────────────┐
   │  Agent Sam — local-first scaffold   │
-  ├─────────────────────────────────────┤
+  ├──────────────────────────────────────┤
   │  Name:     ${meta.projectName.padEnd(25)}│
   │  Lane:     ${meta.laneKey.padEnd(25)}│
   │  Run:      ${meta.runTarget.padEnd(25)}│
-  └─────────────────────────────────────┘
+  └──────────────────────────────────────┘
   `);
 
   const dir = writeScaffoldFiles(meta.projectName, meta.files);
@@ -167,10 +169,10 @@ async function initInteractive(partial = {}) {
   const prompt = createPrompt();
 
   console.log(`
-  ╔═══════════════════════════════════╗
+  ╔════════════════════════════════╗
   ║   Agent Sam SDK — Init            ║
   ║   Local-first · Node only         ║
-  ╚═══════════════════════════════════╝
+  ╚════════════════════════════════╝
   `);
 
   const projectName =
@@ -243,9 +245,9 @@ async function runShellInfo(argv = []) {
 
   const next = SHELL_PHASES.find((p) => p.status === 'next' || p.status === 'current');
   console.log(`
-  ╔═══════════════════════════════════╗
+  ╔═══════════════════════════════╗
   ║        Agent Sam Terminal         ║
-  ╚═══════════════════════════════════╝
+  ╚════════════════════════════════╝
 
   Local PTY   agentsam start-local     ws://127.0.0.1:3099
   ANSI TUI    agentsam tui             zero-dependency Node UI
@@ -333,6 +335,8 @@ if (command === '--version' || command === '-v') {
   await runMerkle(rest);
 } else if (command === 'deploy-receipt') {
   await runDeployReceipt(rest);
+} else if (command === 'recon') {
+  await runRecon(rest);
 } else if (command === 'mini') {
   try {
     await runMini(rest);
